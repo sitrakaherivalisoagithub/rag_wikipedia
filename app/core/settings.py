@@ -8,8 +8,8 @@ class Settings(BaseSettings):
 
     # --- Gemini---
     GEMINI_API_KEY: str
-    LANGUAGE_MODEL_NAME: str = "gemini-1.5-flash"
-    EMBEDDING_MODEL_NAME: str = "text-embedding-004"
+    LANGUAGE_MODEL_NAME: str = "gemini-3.5-flash"
+    EMBEDDING_MODEL_NAME: str = "gemini-embedding-001"
 
     # --- Qdrant ---
     QDRANT_API_KEY: str | None = None
