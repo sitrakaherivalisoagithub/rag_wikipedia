@@ -170,6 +170,7 @@ L'exécution du script `evaluate_llm_judge.py` génère un fichier `EVALUATION.m
 
 ```
 .gitignore
+.env.example
 Dockerfile
 main.py
 README.md
@@ -177,7 +178,8 @@ requirements.txt
 app/
 ├── __init__.py
 ├── core/
-│   ├── dependencies.py
+│   ├── agent_manager.py
+|   ├── dependencies.py
 │   └── settings.py
 ├── db/
 │   └── vector_store.py
@@ -188,7 +190,8 @@ app/
 │   │   ├── generator.py
 │   │   ├── intent_analysis.py
 │   │   └── retriever.py
-│   └── state.py
+│   ├── state.py
+|   └── workflow.py
 ├── schemas/
 │   ├── chat.py
 │   └── ingestion.py
