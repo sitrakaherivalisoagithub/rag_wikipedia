@@ -12,7 +12,7 @@ import uuid
 from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, status
 from langchain_core.messages import HumanMessage
 import uvicorn
 
@@ -107,6 +107,68 @@ async def chat_endpoint(request: ChatRequest):
     except Exception as e:
         logger.error(f"Error in /chat endpoint: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
+
+@api.websocket('/bot')
+async def bot_endpoint(websocket: WebSocket):
+    """
+    Handles bidirectional communication for the chatbot over WebSocket.
+
+    A new conversation thread is created for each new WebSocket connection.
+    The server listens for incoming messages, processes them through the LangGraph agent,
+    and sends the response back to the client.
+
+    The connection is closed if the client disconnects or an error occurs.
+    """
+    # 1. Get or create a thread ID
+    thread_id = str(uuid.uuid4())
+    websocket.state.thread_id = thread_id
+    await websocket.accept()
+    logger.info(f"WebSocket connection established for thread {thread_id}")
+    try:
+        while True:
+
+            message = await websocket.receive_text()
+            logger.info(f"Received message for thread {thread_id}: {message}")
+            # 2. Get the current state of the conversation
+            current_state = await agent_manager.get_state(websocket.state.thread_id)
+            logger.debug(f"Current state for thread {thread_id}: {current_state}")
+            
+            # 3. Add the new user message to the history
+            messages = current_state.get("messages", [])
+            messages.append(HumanMessage(content=message))
+
+            # 4. Invoke the graph with the updated message history
+            inputs = {"messages": messages, "context": []}
+            result = await agent_manager.invoke(inputs, websocket.state.thread_id)
+            logger.debug(f"Final state for thread {thread_id}: {result}")
+
+            # 5. Extract the last AI response
+            last_message = result["messages"][-1]
+
+            # 6. Format sources to include page numbers if available
+            sources = []
+            for doc in result.get("context", []):
+                source_info = {
+                    "source": doc.metadata.get("source"),
+                    "section": doc.metadata.get("h2_section"),
+                    "sub_section": doc.metadata.get("h3_section"),
+                    "type": doc.metadata.get("content_type")
+                }
+                sources.append(source_info)
+
+            await websocket.send_json(
+                MessageResponse(
+                response=last_message.content,
+                thread_id=thread_id,
+                language=result.get("language"),
+                sources=sources
+            ).model_dump())
+    except WebSocketDisconnect:
+        logger.info(f"WebSocket connection closed for thread {thread_id}")
+    except Exception as e:
+        logger.error(f"Error in /bot endpoint for thread {thread_id}: {e}")
+        await websocket.send_json({"error": "Internal server error"})
+        await websocket.close(code=1011)
 
 
 
