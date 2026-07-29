@@ -23,6 +23,15 @@ Le workflow se déroule en 4 étapes principales :
 3.  **`document_filter`**: Un nœud critique qui examine les documents récupérés. Il rejette les documents non pertinents pour éviter de polluer le contexte du générateur. Cette étape est essentielle pour la précision et la fiabilité de la réponse finale.
 4.  **`generator`**: Le nœud final qui prend la question et les documents filtrés pour générer une réponse claire, factuelle et synthétique en s'appuyant exclusivement sur les sources fournies.
 
+```mermaid
+graph TD
+  A[User Query] --> B[Intent Analysis]
+  B -->|Need Retrieval| C[Retriever]
+  B -->|Small Talk| D[Generate Response]
+  C --> E[Document Filter]
+  E --> D
+```
+
 ### Endpoints de l'API
 
 L'interaction avec le RAG se fait via les endpoints suivants :
