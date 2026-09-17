@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     SERVICE_ACCOUNT_FILE_PATH: str | None = None
 
     # --- Gemini---
-    GEMINI_API_KEY: str
+    GEMINI_API_KEY: str | None = None
     LANGUAGE_MODEL_NAME: str = "gemini-3.5-flash"
     EMBEDDING_MODEL_NAME: str = "gemini-embedding-001"
 
